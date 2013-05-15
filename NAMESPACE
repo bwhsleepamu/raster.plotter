@@ -1,0 +1,3 @@
+import(RJSONIO, xts, ggplot2, plyr, scales, grid)
+
+export(plot_raster)

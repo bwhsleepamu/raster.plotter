@@ -1,0 +1,8 @@
+Package: dsm.raster.plot
+Title: Tool for drawing simple sleep raster plots from JSON input.
+Description: 
+Version: 0.1
+Author: Piotr Mankowski <pmankowski@partners.org>
+Maintainer: Piotr Mankowski <pmankowski@partners.org>
+License: MIT
+Depends: RJSONIO, xts, ggplot2, plyr, scales, grid
