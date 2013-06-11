@@ -30,7 +30,7 @@ json_input.read_single_event <- function(event_info) {
   second_parts <- mdply(spanning, raster_plot.second_div)
 
   df <- rbind(non_spanning, first_parts, second_parts)
-  df$day = as.Date(df$start_time, tz="ETS")
+  df$day = as.Date(df$start_time, tz="EST")
 
   df$start_time <- do.call(c, lapply(df$start_time, function(x) { xts::.parseISO8601(format(x, "0001-01-01T%H:%M:%S"))$first.time }))  
   df$end_time <- do.call(c, lapply(df$end_time, function(x) { xts::.parseISO8601(format(x, "0001-01-01T%H:%M:%S"))$first.time }))  
@@ -42,15 +42,7 @@ json_input.read <- function(json_in) {
   Reduce(function(...) merge(..., all=T), lapply(json_in$events, json_input.read_single_event))
 }
 
-
-plot_raster <- function(json_path) {
-  # Read input and create data frame
-  json_input <- fromJSON(json_path)
-  df<-json_input.read(json_input)
-
-  # Set up day dates for correct faceting
-  df$day_s <- do.call(c, lapply(df$day, toString))
-
+set_up_plot <- function(df, title) {
   # Initialize Plot
   plot <- ggplot(data=df)
 
@@ -61,7 +53,7 @@ plot_raster <- function(json_path) {
   plot <- plot + theme(panel.margin = unit(0, "npc"))
 
   # Set Title
-  plot <- plot + ggtitle(json_input$title) 
+  plot <- plot + ggtitle(title) 
 
   # Set Up X Axis
   limits <- c(as.POSIXct(strptime("0001-01-01T00:00:00", "%Y-%m-%dT%H:%M:%S")), as.POSIXct(strptime("0001-01-02T00:00:00", "%Y-%m-%dT%H:%M:%S")))
@@ -76,7 +68,22 @@ plot_raster <- function(json_path) {
 
   # Set Up Faceting by Day
   plot <- plot + facet_grid(day_s ~ .)
-  
+
+}
+
+
+plot_raster <- function(json_path) {
+  # Read input and create data frame
+  json_input <- fromJSON(json_path)
+  df <- json_input.read(json_input)
+
+  # Set up day dates for correct faceting
+  df$day_s <- do.call(c, lapply(df$day, toString))
+
+  # Initialize Plot
+  plot <- set_up_plot(df, json_input$title)
+
+  # Save Plot
   ggsave(plot=plot, filename=json_input$filename, path=json_input$save_path, dpi=80, units="in", width=13, height=8)
   
 }
