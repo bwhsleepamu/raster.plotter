@@ -1,6 +1,6 @@
 Package: dsm.raster.plot
-Title: Tool for drawing simple sleep raster plots from JSON input.
-Description: 
+Title: Tool for drawing longitudinal data raster plots .
+Description: This plotting tool targets the requirements of the sleep research community for the visualization of longitudinal datasets.
 Version: 0.2.0.pre
 Author: Piotr Mankowski <pmankowski@partners.org>
 Maintainer: Piotr Mankowski <pmankowski@partners.org>
