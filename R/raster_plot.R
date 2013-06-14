@@ -30,7 +30,7 @@ json_input.read_single_event <- function(event_info) {
   second_parts <- mdply(spanning, raster_plot.second_div)
 
   df <- rbind(non_spanning, first_parts, second_parts)
-  df$day = as.Date(df$start_time, tz="EST")
+  df$day = do.call(c, lapply(df$start_time, function(x) { as.Date(toString(x)) }))
 
   df$start_time <- do.call(c, lapply(df$start_time, function(x) { xts::.parseISO8601(format(x, "0001-01-01T%H:%M:%S"))$first.time }))  
   df$end_time <- do.call(c, lapply(df$end_time, function(x) { xts::.parseISO8601(format(x, "0001-01-01T%H:%M:%S"))$first.time }))  
@@ -50,7 +50,7 @@ set_up_plot <- function(df, title) {
   plot <- plot + geom_rect(aes(NULL, NULL, xmin=start_time, xmax=end_time, fill=name, ymin=as.numeric(group), ymax=as.numeric(group)+1))
   
   # Get rid of excess margins for double-plotting
-  plot <- plot + theme(panel.margin = unit(0, "npc"))
+  plot <- plot + theme(panel.margin = unit(0.001, "npc"))
 
   # Set Title
   plot <- plot + ggtitle(title) 
