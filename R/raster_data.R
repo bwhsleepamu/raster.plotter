@@ -1,12 +1,36 @@
 first_div <- function(name, start_time, end_time, color, group) {
-  new_end_time <- xts::.parseISO8601(format(start_time, "%Y-%m-%dT23:59:59"))$last.time
+  new_end_time <- read_iso_time(format(start_time, "%Y-%m-%dT23:59:59"))
   data.frame(name=name, start_time=start_time, end_time = new_end_time, color=color, group=group)
 }
 
-second_div <- function(name, start_time, end_time, color, group) {
-  new_start_time <- xts::.parseISO8601(format(end_time, "%Y-%m-%dT00:00:00"))$first.time
+middle_div <- function(name, start_time, end_time, color, group) {
+  secs_in_day <- 3600*24
+  new_end_time <- read_iso_time(format(start_time, "%Y-%m-%dT23:59:59"))
+  new_start_time <- read_iso_time(format(end_time, "%Y-%m-%dT00:00:00"))
+  
+  gap_size <- as.numeric(round(difftime(new_start_time, new_end_time, units="days")))
+
+
+  if(gap_size > 0) {
+    sts <- vector()
+    ets <- vector()
+    for(day_num in 1:gap_size) {
+      ref_time <- start_time+(secs_in_day*day_num)
+      sts <- append(sts, read_iso_time(format(ref_time, "%Y-%m-%dT00:00:00")))
+      ets <- append(sts, read_iso_time(format(ref_time, "%Y-%m-%dT23:59:59")))
+    }
+    data.frame(name=name, start_time=sts, end_time=ets, color=color, group=group) 
+  } else {
+    NULL
+  }
+}
+
+last_div <- function(name, start_time, end_time, color, group) {
+  new_start_time <- read_iso_time(format(end_time, "%Y-%m-%dT00:00:00"))
   data.frame(name=name, start_time=new_start_time, end_time = end_time, color=color, group=group)
 }
+
+
 
 
 raster_data <- function(x, ...) UseMethod("raster_data")
@@ -15,7 +39,7 @@ raster_data.default <- function(input_data, ...) {
 }
 
 raster_data.list <- function(input_list, ...) {
-  rd <- list(title=input_list$title, save_path=input_list$save_path, file_name=input_list$file_name)
+  rd <- list(title=input_list$title, save_path=input_list$save_path, file_name=input_list$filename)
   # Break up by event type
 
   # Process Block Events
@@ -26,6 +50,8 @@ raster_data.list <- function(input_list, ...) {
   rd$blocks <- Reduce(function(...) merge(..., all=T), lapply(input_list$block_events, process_block_event))   
   rd$linear <- process_linear_event(input_list$linear_events[[1]])
   #Reduce(function(...) merge(..., all=T), lapply(input_list$linear_events, process_linear_event))
+  
+  rd$number_of_days <- length(unique(c(rd$single_timepoints$day_s, rd$blocks$day_s, rd$linear$plot_data$day_s)))
 
   rd
 }
@@ -44,12 +70,14 @@ process_block_event <- function(event_info) {
   spanning <- df[format(df$start_time, "%Y%m%d") != format(df$end_time, "%Y%m%d"),]
   
   first_parts <- mdply(spanning, first_div)
-  second_parts <- mdply(spanning, second_div)
+  middle_parts <- mdply(spanning, middle_div)
+  last_parts <- mdply(spanning, last_div)
 
-  df <- rbind(non_spanning, first_parts, second_parts)
-  df$day = as.Date(df$start_time, tz="EST")
+  df <- rbind(non_spanning, first_parts, middle_parts, last_parts)
 
-  df$day_s <- do.call(c, lapply(df$day, format_date_label))
+  df$day = do.call(c, lapply(df$start_time, function(x) { as.Date(toString(x)) }))
+
+  df$day_s <- do.call(c, lapply(df$day, toString))
 
   df$start_time <- do.call(c, lapply(df$start_time, function(x) { read_iso_time(format(x, "0001-01-01T%H:%M:%S")) }))  
   df$end_time <- do.call(c, lapply(df$end_time, function(x) { read_iso_time(format(x, "0001-01-01T%H:%M:%S")) }))  
@@ -78,7 +106,7 @@ process_single_timepoint_event <- function(event_info) {
 
   df$day = as.Date(df$time, tz="EST")
 
-  df$day_s <- do.call(c, lapply(df$day, format_date_label))
+  df$day_s <- do.call(c, lapply(df$day, toString))
   df$time <- do.call(c, lapply(df$time, function(x) { read_iso_time(format(x, "0001-01-01T%H:%M:%S")) }))  
 
   df
@@ -87,7 +115,7 @@ process_single_timepoint_event <- function(event_info) {
 
 process_linear_event <- function(event_info) {
 
-  linear_event_info <- list(name=event_info$name, y_range=event_info$y_range, color=event_info$color)
+  linear_event_info <- list(name=event_info$name, y_range=event_info$y_range, color=event_info$color, limits=event_info$limits)
 
   x_times <- do.call(c, lapply(event_info$times, function(x) {read_iso_time(x[1])}))
   y_vals <- do.call(c, lapply(event_info$times, function(x) {as.numeric(x[2])}))
@@ -96,15 +124,12 @@ process_linear_event <- function(event_info) {
 
   linear_event_info$plot_data$day <- as.Date(linear_event_info$plot_data$time, tz="EST")
 
-  do.call(c, lapply(linear_event_info$plot_data$day, format_date_label))
+  linear_event_info$plot_data$day_s <- do.call(c, lapply(linear_event_info$plot_data$day, toString))
 
   linear_event_info$plot_data$time <- do.call(c, lapply(linear_event_info$plot_data$time, function(x) { read_iso_time(format(x, "0001-01-01T%H:%M:%S")) }))  
   
+
   linear_event_info
 }
 
-
-format_date_label <- function(date) {
-  format(date, format="%a %m/%d")
-}
 
