@@ -50,7 +50,7 @@ set_up_plot <- function(df, title) {
   plot <- plot + geom_rect(aes(NULL, NULL, xmin=start_time, xmax=end_time, fill=name, ymin=as.numeric(group), ymax=as.numeric(group)+1))
   
   # Get rid of excess margins for double-plotting
-  plot <- plot + theme(panel.margin = unit(0.001, "npc"))
+  plot <- plot + theme(panel.margin = unit(0.01, "npc"))
 
   # Set Title
   plot <- plot + ggtitle(title) 
