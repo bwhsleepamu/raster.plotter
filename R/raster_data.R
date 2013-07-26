@@ -49,7 +49,6 @@ raster_data.list <- function(input_list, ...) {
   rd$single_timepoints <- Reduce(function(...) merge(..., all=T), lapply(input_list$single_timepoints, process_single_timepoint_event))   
   rd$blocks <- Reduce(function(...) merge(..., all=T), lapply(input_list$block_events, process_block_event))   
   rd$linear <- process_linear_event(input_list$linear_events[[1]])
-  #Reduce(function(...) merge(..., all=T), lapply(input_list$linear_events, process_linear_event))
   
   rd$number_of_days <- length(unique(c(rd$single_timepoints$day_s, rd$blocks$day_s, rd$linear$plot_data$day_s)))
 

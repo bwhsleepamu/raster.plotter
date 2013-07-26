@@ -16,10 +16,10 @@ set_up_plot <- function(rd) {
   plot <- plot + geom_rect(aes(NULL, NULL, xmin=start_time, xmax=end_time, fill=name, ymin=(-10 * group), ymax=((-10 * group) + 10)), data=rd$blocks)
 
   # Add single timepoints
-  plot <- plot + geom_segment(aes(x=time, xend=time, y=-20, yend=0), data=rd$single_timepoints)
+  #plot <- plot + geom_segment(aes(x=time, xend=time, y=-20, yend=0), data=rd$single_timepoints)
 
   # Add plots for linear data  
-  plot <- plot + geom_line(aes(time, y_value), data=rd$linear$plot_data)
+  #plot <- plot + geom_line(aes(time, y_value), data=rd$linear$plot_data)
   
   # Get rid of excess margins for double-plotting
   plot <- plot + theme(panel.margin = unit(0.01, "npc"))
@@ -33,14 +33,14 @@ set_up_plot <- function(rd) {
   plot <- plot + scale_x_datetime(breaks=breaks, limits=limits, name="Time of Day", expand=c(0,0), minor_breaks=NULL)
 
   # Set Up Y Axis
-  limits = c(as.numeric(rd$linear$limits[1]) - 20, as.numeric(rd$linear$limits[2]))
-  if(length(rd$linear$plot_data$time > 0)) {
-    labels = waiver()
-    breaks = waiver()
-  } else {
-    labels = NULL
-    breaks = NULL
-  }
+  limits = c(as.numeric(rd$linear$limits[1]) - 10, as.numeric(rd$linear$limits[2]))
+  # if(length(rd$linear$plot_data$time > 0)) {
+  #   labels = waiver()
+  #   breaks = waiver()
+  # } else {
+  labels = NULL
+  breaks = NULL
+  # }
 
   plot <- plot + scale_y_continuous(labels=labels, breaks=breaks, name="", limits=limits)
 
