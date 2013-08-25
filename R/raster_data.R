@@ -244,13 +244,14 @@ process_linear_data <- function(x) {
   #f <- do.call(firstof, as.list(c(as.numeric(YYYY), as.numeric(MM), as.numeric(DD), as.numeric(H), as.numeric(M), as.numeric(S), tz)))
   t <- do.call(firstof, as.list(c(1, 1, 1, as.numeric(H), as.numeric(M), as.numeric(S), tz)))
   ds <- sprintf("%s-%s-%s", YYYY, MM, DD)
-  d <- as.Date(ds)
+  d <- as.Date.character(ds, format="%Y-%m-%d")
   v <- as.numeric(val)
 
   
-  
 
-  list(time=(if(length(t) != 1) NA else t), date=(if(length(d) != 1) NA else d), date_s=(if(length(ds) != 1) NA else ds), y_value=(if(length(v) != 1) NA else v))
+
+  #list(time=(if(length(t) != 1) NA else t), date=(if(length(d) != 1) NA else d), date_s=(if(length(ds) != 1) NA else ds), y_value=(if(length(v) != 1) NA else v))
+  list(t, ds, d, v)
 }
 
 process_single_timepoint_event <- function(event_info) {
@@ -289,7 +290,8 @@ process_linear_event <- function(event_info) {
   #linear_event_info$plot_data$time <- do.call(c, lapply(linear_event_info$plot_data$time, function(x) { read_iso_time(format(x, "0001-01-01T%H:%M:%S")) }))  
   
 
-  linear_event_info$plot_data <- lapply(event_info$points, process_linear_data)
+  linear_event_info$plot_data <- data.frame(do.call(rbind, lapply(event_info$points, process_linear_data)))
+  colnames(linear_event_info$plot_data) <- c(day, day_s, time, y_value)
 }
 
 ## Labtime Addition
