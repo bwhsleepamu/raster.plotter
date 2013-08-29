@@ -13,7 +13,9 @@ set_up_plot <- function(rd) {
 
 
   # Add Rasters for block events
-  plot <- plot + geom_rect(aes(NULL, NULL, xmin=start_time, xmax=end_time, fill=name, ymin=(-10 * group), ymax=((-10 * group) + 10)), data=rd$blocks)
+  plot <- ggplot()#rd$linear$plot_data)
+  plot <- plot + geom_rect(aes(NULL, NULL, xmin=start_time, fill=color, xmax=end_time, ymin=0, ymax=10), data=rd$blocks) #(-10 * group), ymax=((-10 * group) + 10)), data=rd$blocks)
+  plot <- plot + facet_grid(day_s ~ ., labeller = format_date_label) + theme(strip.text.y = element_text(angle=0)) 
 
   # Add single timepoints
   #plot <- plot + geom_segment(aes(x=time, xend=time, y=-20, yend=0), data=rd$single_timepoints)

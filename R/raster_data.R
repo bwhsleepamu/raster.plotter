@@ -1,11 +1,11 @@
 
 
-first_div <- function(name, start_time, end_time, color, group) {
+first_div <- function(name, start_time, end_time, color) {
   new_end_time <- read_iso_time(format(start_time, "%Y-%m-%dT23:59:59"))
-  data.frame(name=name, start_time=start_time, end_time = new_end_time, color=color, group=group)
+  data.frame(name=name, start_time=start_time, end_time = new_end_time, color=color)
 }
 
-middle_div <- function(name, start_time, end_time, color, group) {
+middle_div <- function(name, start_time, end_time, color) {
   secs_in_day <- 3600*24
   new_end_time <- read_iso_time(format(start_time, "%Y-%m-%dT23:59:59"))
   new_start_time <- read_iso_time(format(end_time, "%Y-%m-%dT00:00:00"))
@@ -21,15 +21,15 @@ middle_div <- function(name, start_time, end_time, color, group) {
       sts <- append(sts, read_iso_time(format(ref_time, "%Y-%m-%dT00:00:00")))
       ets <- append(sts, read_iso_time(format(ref_time, "%Y-%m-%dT23:59:59")))
     }
-    data.frame(name=name, start_time=sts, end_time=ets, color=color, group=group) 
+    data.frame(name=name, start_time=sts, end_time=ets, color=color) 
   } else {
     NULL
   }
 }
 
-last_div <- function(name, start_time, end_time, color, group) {
+last_div <- function(name, start_time, end_time, color) {
   new_start_time <- read_iso_time(format(end_time, "%Y-%m-%dT00:00:00"))
-  data.frame(name=name, start_time=new_start_time, end_time = end_time, color=color, group=group)
+  data.frame(name=name, start_time=new_start_time, end_time = end_time, color=color)
 }
 
 
@@ -56,8 +56,8 @@ raster_data.list <- function(input_list, ...) {
 
   # Process Linear Events
   linear_e <- e[vapply(e, function(x) x$type == "linear", FALSE)]
-  rd$linear <- process_linear_event(linear_e[[1]])
-  
+  if(length(linear_e) > 0) rd$linear <- process_linear_event(linear_e[[1]])
+
   rd$number_of_days <- length(unique(c(rd$single_timepoints$day_s, rd$blocks$day_s, rd$linear$plot_data$day_s)))
 
   rd
@@ -98,7 +98,11 @@ process_start_end_block_event <- function(event_info) {
   et <- do.call(c, lapply(event_info$blocks, function(x) read_iso_time(x[2]) ))
 
   if(is.null(event_info$color)) {
-    colors <- do.call(c, lapply(event_info$blocks, function(x) x[3] ))
+    if(length(event_info$blocks[[1]]) > 2) {
+      colors <- do.call(c, lapply(event_info$blocks, function(x) x[3]))
+    } else {
+      colors <- "#000000"
+    }
   } else {
     colors <- event_info$color
   }
@@ -108,150 +112,36 @@ process_start_end_block_event <- function(event_info) {
   df
 }
 
+parse_timestring <- function(time_s) {
+  parsed_time <- list()
+  parsed_time$year <- as.numeric(substr(time_s, 1, 4))
+  parsed_time$month <- as.numeric(substr(time_s, 6, 7))
+  parsed_time$day <- as.numeric(substr(time_s, 9, 10))
+  parsed_time$hour <- as.numeric(substr(time_s, 12, 13))
+  parsed_time$min <- as.numeric(substr(time_s, 15, 16))
+  parsed_time$sec <- as.numeric(substr(time_s, 18, 19))
+  parsed_time$tz <- "EST"
+  
+  parsed_time
+}
+
 read_iso_time <- function(x) {
-  YYYY <- substr(x, 1, 4)
-  MM <- substr(x, 6, 7)
-  DD <- substr(x, 9, 10)
-  H <- substr(x, 12, 13)
-  M <- substr(x, 15, 16)
-  S <- substr(x, 18, 19)
+  time <- parse_timestring(x)
   tz="EST"
 
-
-  f <- do.call(firstof, as.list(c(as.numeric(YYYY), as.numeric(MM), as.numeric(DD), as.numeric(H), as.numeric(M), as.numeric(S), tz)))
-#  t <- do.call(firstof, as.list(c(1, 1, 1, as.numeric(H), as.numeric(M), as.numeric(S), tz)))
-  #as.POSIXct(s)
- # data.frame(full_time=s, date=sprintf("%s-%s-%s", YYYY, MM, DD), time=t)
+  f <- do.call(firstof, time)
   f
 }
 
-function (x, start, end, tz = "") 
-{
-    as_numeric <- function(.x) {
-        if (gsub(" ", "", .x) == "") 
-            NULL
-        else as.numeric(.x)
-    }
-    x <- gsub("NOW", format(Sys.time(), "%Y%m%dT%H%M%S"), x)
-    x <- gsub("TODAY", format(Sys.Date(), "%Y%m%d"), x)
-    if (identical(grep("/|(--)|(::)", x), integer(0))) {
-        x <- paste(x, x, sep = "/")
-    }
-    intervals <- unlist(strsplit(x, "/|(--)|(::)"))
-    DURATION <- ""
-    if (length(intervals) == 2L) {
-        if (substr(intervals[1], 0, 1) == "P") {
-            DURATION <- intervals[1]
-            DURATION_LHS <- TRUE
-            intervals[1] <- ""
-        }
-        if (substr(intervals[2], 0, 1) == "P") {
-            DURATION <- intervals[2]
-            DURATION_LHS <- FALSE
-            intervals <- intervals[1]
-        }
-    }
-    parse.side <- function(x, startof) {
-        if (is.na(x) || !nzchar(x)) 
-            return(c(NULL))
-        basic <- gsub(":|-", "", x, perl = TRUE)
-        date.time <- unlist(strsplit(basic, " |T"))
-        date <- date.time[1]
-        if (!missing(startof) && nchar(basic) == 2L) {
-            startof <- gsub(":|-", "", startof, perl = TRUE)
-            if (nchar(startof) - nchar(date) >= 4) {
-                sstartof <- substr(startof, 0, nchar(startof) - 
-                  nchar(date))
-                date <- paste(sstartof, date, sep = "")
-            }
-        }
-        date <- sprintf("%-8s", date)
-        YYYY <- substr(date, 0, 4)
-        MM <- substr(date, 5, 6)
-        DD <- substr(date, 7, 8)
-        time <- date.time[2]
-        if (!is.na(time)) {
-            time <- sprintf("%-6s", time)
-            H <- substr(time, 0, 2)
-            M <- substr(time, 3, 4)
-            S <- substr(time, 5, 10000L)
-        }
-        else H <- M <- S <- ""
-        c(as.list(c(year = as_numeric(YYYY), mon = as_numeric(MM), 
-            day = as_numeric(DD), hour = as_numeric(H), min = as_numeric(M), 
-            sec = as_numeric(S))), tz = tz)
-    }
-    s <- e <- NA
-    if (nzchar(intervals[1])) 
-        s <- as.POSIXlt(do.call(firstof, parse.side(intervals[1])))
-    if (length(intervals) == 2L) {
-        e <- as.POSIXlt(do.call(lastof, parse.side(intervals[2], 
-            intervals[1])))
-        if (is.na(e)) 
-            e <- as.POSIXlt(do.call(lastof, parse.side(intervals[2])))
-    }
-    if (!missing(start)) {
-        start <- as.numeric(start)
-        s <- as.POSIXlt(.POSIXct(max(start, as.numeric(s), na.rm = TRUE), 
-            tz = tz))
-    }
-    if (!missing(end)) {
-        end <- as.numeric(end)
-        e <- as.POSIXlt(.POSIXct(min(end, as.numeric(e), na.rm = TRUE), 
-            tz = tz))
-    }
-    if (nzchar(DURATION)) {
-        parse_duration <- function(P) {
-            P <- gsub("P", "", P)
-            P <- gsub("T(.*)M", "\\1m", P)
-            n <- unlist(strsplit(P, "[[:alpha:]]"))
-            d <- unlist(strsplit(gsub("[[:digit:]]", "", P), 
-                ""))
-            dur.vec <- list(as.numeric(n), unname(c(Y = 6, M = 5, 
-                D = 4, H = 3, m = 2, S = 1)[d]))
-            init.vec <- rep(0, 9)
-            init.vec[dur.vec[[2]]] <- dur.vec[[1]]
-            init.vec
-        }
-        if (DURATION_LHS) {
-            s <- as.POSIXct(structure(as.list(mapply(`-`, e, 
-                parse_duration(DURATION))), class = c("POSIXt", 
-                "POSIXlt"), tzone = attr(e, "tzone")))
-        }
-        else {
-            e <- as.POSIXct(structure(as.list(mapply(`+`, s, 
-                parse_duration(DURATION))), class = c("POSIXt", 
-                "POSIXlt"), tzone = attr(e, "tzone")))
-        }
-    }
-    list(first.time = as.POSIXct(s), last.time = as.POSIXct(e))
-}
-
-
-
 process_linear_data <- function(x) {
-  time <- x[[1]]
-  val <- x[[2]]
+  time <- parse_timestring(x[[1]])
+  val <- as.numeric(x[[2]])
 
-  YYYY <- substr(time, 1, 4)
-  MM <- substr(time, 6, 7)
-  DD <- substr(time, 9, 10)
-  H <- substr(time, 12, 13)
-  M <- substr(time, 15, 16)
-  S <- substr(time, 18, 19)
-  tz="EST"
-
-  #f <- do.call(firstof, as.list(c(as.numeric(YYYY), as.numeric(MM), as.numeric(DD), as.numeric(H), as.numeric(M), as.numeric(S), tz)))
-  t <- do.call(firstof, as.list(c(1, 1, 1, as.numeric(H), as.numeric(M), as.numeric(S), tz)))
-  ds <- sprintf("%s-%s-%s", YYYY, MM, DD)
+  t <- do.call(firstof, list(1, 1, 1, time$hour, time$min, time$sec, time$tz))
+  ds <- sprintf("%s-%s-%s", time$year, time$month, time$day)
   d <- as.Date.character(ds, format="%Y-%m-%d")
-  v <- as.numeric(val)
 
-  
-
-
-  #list(time=(if(length(t) != 1) NA else t), date=(if(length(d) != 1) NA else d), date_s=(if(length(ds) != 1) NA else ds), y_value=(if(length(v) != 1) NA else v))
-  list(t, ds, d, v)
+  list(t, ds, d, val)
 }
 
 process_single_timepoint_event <- function(event_info) {
@@ -270,28 +160,11 @@ process_single_timepoint_event <- function(event_info) {
 
 process_linear_event <- function(event_info) {
 
-  linear_event_info <- list(name=event_info$name, limits=event_info$limits, color=event_info$color)#, limits=event_info$limits)
-  
-  # linear_event_info$plot_data <- data.frame(matrix(unlist(event_info$points), ncol=2, byrow=TRUE))
-  # colnames(linear_event_info$plot_data) <-  c("time", "y_value")
-  # linear_event_info$plot_data <- mdply(linear_event_reainfo$plot_data, function(time, y_value) { data.frame(time=read_iso_time(time), y_value=as.numeric(y_value)) })
-
-  #x_times <- do.call(c, lapply(event_info$points, function(x) read_iso_time(x[1]) ))
-  # y_vals <- do.call(c, lapply(event_info$points, function(x) {as.numeric(x[2])}))
-  #y_vals <- unlist(lapply(event_info$points, function(x) x[2]))
-
-
-  #linear_event_info$plot_data <- data.frame(time=x_times, y_value=y_vals)
-
-  #linear_event_info$plot_data$day <- as.Date(linear_event_info$plot_data$time, tz="EST")
-
-  #linear_event_info$plot_data$day_s <- do.call(c, lapply(linear_event_info$plot_data$day, toString))
-
-  #linear_event_info$plot_data$time <- do.call(c, lapply(linear_event_info$plot_data$time, function(x) { read_iso_time(format(x, "0001-01-01T%H:%M:%S")) }))  
-  
-
+  linear_event_info <- list(name=event_info$name, limits=event_info$limits, color=(if(is.null(event_info$color)) "#000000" else event_info$color)) #, limits=event_info$limits)
   linear_event_info$plot_data <- data.frame(do.call(rbind, lapply(event_info$points, process_linear_data)))
-  colnames(linear_event_info$plot_data) <- c(day, day_s, time, y_value)
+  colnames(linear_event_info$plot_data) <- c("day", "day_s", "time", "y_value")
+
+  linear_event_info
 }
 
 ## Labtime Addition
