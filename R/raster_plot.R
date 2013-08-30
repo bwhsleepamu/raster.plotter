@@ -16,13 +16,13 @@ set_up_plot <- function(rd) {
   block_height <- base_height_for_blocks(rd)
   rd$blocks$ymin <- rd$block$position * block_height
   rd$blocks$ymax <- (rd$block$position * block_height) + block_height
-  #rd$blocks$color <- paste(rd$blocks$color, "CC", sep="")
+  rd$blocks$color <- paste(rd$blocks$color, "CC", sep="")
 
   # Set Title
   plot <- plot + ggtitle(rd$title) 
 
   # Get rid of excess margins for double-plotting
-  plot <- plot + theme(panel.margin = unit(0.01, "npc"))
+  plot <- plot + theme(panel.margin = unit(0.00, "npc"))
 
   # Set Up X Axis
   limits <- c(as.POSIXct(strptime("0001-01-01T00:00:00", "%Y-%m-%dT%H:%M:%S")), as.POSIXct(strptime("0001-01-02T00:00:00", "%Y-%m-%dT%H:%M:%S")))
@@ -43,7 +43,9 @@ set_up_plot <- function(rd) {
 
   # Add Rasters for block events
   plot <- plot + geom_rect(aes(NULL, NULL, xmin=start_time, fill=color, xmax=end_time, ymin=ymin, ymax=ymax), data=rd$blocks) #(-10 * group), ymax=((-10 * group) + 10)), data=rd$blocks)
-  plot <- plot + facet_grid(day_s ~ ., labeller = format_date_label) + theme(strip.text.y = element_text(angle=0)) 
+  
+  # Set Up Faceting by Day and Double Plot
+  plot <- plot + facet_grid(day_s ~ double_plot_pos, labeller = format_facet_label) + theme(strip.text.y = element_text(angle=0)) 
   plot <- plot + scale_fill_identity()
 
 
@@ -60,7 +62,6 @@ set_up_plot <- function(rd) {
   # # Set Up Fill Colors
   # plot <- plot + scale_fill_manual(values=alpha(levels(rd$blocks$color), 0.7))
 
-  # # Set Up Faceting by Day
   # plot <- plot + facet_grid(day_s ~ ., labeller = format_date_label) + theme(strip.text.y = element_text(angle=0)) 
   plot
 }
@@ -80,8 +81,8 @@ plot_raster <- function(json_path) {
 }
 
 
-format_date_label <- function(variable, date) {
-  format(as.Date(date), format="%a %m/%d")
+format_facet_label <- function(variable, value) {
+  if(variable == 'day_s') format(as.Date(value), format="%a %m/%d") else sprintf("Day %d", value)
 }
 
 base_height_for_blocks <- function(df) {

@@ -66,12 +66,8 @@ raster_data.list <- function(input_list, ...) {
 
 process_block_event <- function(event_info) {
 
-  # if(event_info$class == "start_end") {
   df <- process_start_end_block_event(event_info)
-  # } else if (event_info$class == "duration") {
-  #   df <- process_block_duration_event(event_info)
-  # } 
-
+  
   # Divide into parts that span two days, and those that don't
   non_spanning <- df[format(df$start_time, "%Y%m%d") == format(df$end_time, "%Y%m%d"),]
   spanning <- df[format(df$start_time, "%Y%m%d") != format(df$end_time, "%Y%m%d"),]
@@ -83,12 +79,13 @@ process_block_event <- function(event_info) {
   df <- rbind(non_spanning, first_parts, middle_parts, last_parts)
 
   df$day = do.call(c, lapply(df$start_time, function(x) { as.Date(toString(x)) }))
-
-  df$day_s <- do.call(c, lapply(df$day, toString))
-
   df$start_time <- do.call(c, lapply(df$start_time, function(x) { read_iso_time(format(x, "0001-01-01T%H:%M:%S")) }))  
   df$end_time <- do.call(c, lapply(df$end_time, function(x) { read_iso_time(format(x, "0001-01-01T%H:%M:%S")) }))  
- 
+  
+  df <- double_plot(df)
+
+  df$day_s <- do.call(c, lapply(df$day, toString))
+  
   df
 } 
 
@@ -186,5 +183,20 @@ process_block_event.labtime <- function(event_info) {
 
 
 ## Double-Plotting
+double_plot <- function(df) {
+  ### DANGER ###
+  # This function changes the date of the right double-plot, causing the actual dates to not match up with the times. 
+  # The correct date for a given set of times is (day + double_plot_pos)
+  ###
+  
+  r_df <- df
+  l_df <- df
+  
+  l_df$double_plot_pos <- 0
+  r_df$double_plot_pos <- 1
+  r_df$day <- r_df$day - 1
+  
+  return(rbind(l_df, r_df))
+}
 
 
