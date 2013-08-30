@@ -1,11 +1,11 @@
 
 
-first_div <- function(name, start_time, end_time, color) {
+first_div <- function(name, start_time, end_time, color, position, height) {
   new_end_time <- read_iso_time(format(start_time, "%Y-%m-%dT23:59:59"))
-  data.frame(name=name, start_time=start_time, end_time = new_end_time, color=color)
+  data.frame(name=name, start_time=start_time, end_time = new_end_time, color=color, position=position, height=height)
 }
 
-middle_div <- function(name, start_time, end_time, color) {
+middle_div <- function(name, start_time, end_time, color, position, height) {
   secs_in_day <- 3600*24
   new_end_time <- read_iso_time(format(start_time, "%Y-%m-%dT23:59:59"))
   new_start_time <- read_iso_time(format(end_time, "%Y-%m-%dT00:00:00"))
@@ -21,15 +21,15 @@ middle_div <- function(name, start_time, end_time, color) {
       sts <- append(sts, read_iso_time(format(ref_time, "%Y-%m-%dT00:00:00")))
       ets <- append(sts, read_iso_time(format(ref_time, "%Y-%m-%dT23:59:59")))
     }
-    data.frame(name=name, start_time=sts, end_time=ets, color=color) 
+    data.frame(name=name, start_time=sts, end_time=ets, color=color, position=position, height=height) 
   } else {
     NULL
   }
 }
 
-last_div <- function(name, start_time, end_time, color) {
+last_div <- function(name, start_time, end_time, color, position, height) {
   new_start_time <- read_iso_time(format(end_time, "%Y-%m-%dT00:00:00"))
-  data.frame(name=name, start_time=new_start_time, end_time = end_time, color=color)
+  data.frame(name=name, start_time=new_start_time, end_time = end_time, color=color, position=position, height=height)
 }
 
 
@@ -107,7 +107,7 @@ process_start_end_block_event <- function(event_info) {
     colors <- event_info$color
   }
 
-  df <- data.frame(name=event_info$name, start_time=st, end_time=et, color=colors)
+  df <- data.frame(name=event_info$name, start_time=st, end_time=et, color=colors, position=event_info$position, height=event_info$height)
  
   df
 }

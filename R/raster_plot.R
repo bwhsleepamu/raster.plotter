@@ -11,11 +11,41 @@ set_up_plot <- function(rd) {
   # Initialize Plot
   plot <- ggplot()#rd$linear$plot_data)
 
+  # Set Up Block Heights and Positions
+  #rd$blocks <- rd$blocks[rd$blocks$day_s%in%sort(unique(rd$blocks$day_s))[5:10],]
+  block_height <- base_height_for_blocks(rd)
+  rd$blocks$ymin <- rd$block$position * block_height
+  rd$blocks$ymax <- (rd$block$position * block_height) + block_height
+  #rd$blocks$color <- paste(rd$blocks$color, "CC", sep="")
+
+  # Set Title
+  plot <- plot + ggtitle(rd$title) 
+
+  # Get rid of excess margins for double-plotting
+  plot <- plot + theme(panel.margin = unit(0.01, "npc"))
+
+  # Set Up X Axis
+  limits <- c(as.POSIXct(strptime("0001-01-01T00:00:00", "%Y-%m-%dT%H:%M:%S")), as.POSIXct(strptime("0001-01-02T00:00:00", "%Y-%m-%dT%H:%M:%S")))
+  breaks <- pretty_breaks(24)(limits)
+  plot <- plot + scale_x_datetime(breaks=breaks, limits=limits, name="Time of Day", expand=c(0,0), minor_breaks=NULL)
+
+  # # Set Up Y Axis
+  # limits = c(as.numeric(rd$linear$limits[1]) - 10, as.numeric(rd$linear$limits[2]))
+  # # if(length(rd$linear$plot_data$time > 0)) {
+  # #   labels = waiver()
+  # #   breaks = waiver()
+  # # } else {
+  # labels = NULL
+  # breaks = NULL
+  # # }
+
+  # plot <- plot + scale_y_continuous(labels=labels, breaks=breaks, name="", limits=limits)
 
   # Add Rasters for block events
-  plot <- ggplot()#rd$linear$plot_data)
-  plot <- plot + geom_rect(aes(NULL, NULL, xmin=start_time, fill=color, xmax=end_time, ymin=0, ymax=10), data=rd$blocks) #(-10 * group), ymax=((-10 * group) + 10)), data=rd$blocks)
+  plot <- plot + geom_rect(aes(NULL, NULL, xmin=start_time, fill=color, xmax=end_time, ymin=ymin, ymax=ymax), data=rd$blocks) #(-10 * group), ymax=((-10 * group) + 10)), data=rd$blocks)
   plot <- plot + facet_grid(day_s ~ ., labeller = format_date_label) + theme(strip.text.y = element_text(angle=0)) 
+  plot <- plot + scale_fill_identity()
+
 
   # Add single timepoints
   #plot <- plot + geom_segment(aes(x=time, xend=time, y=-20, yend=0), data=rd$single_timepoints)
@@ -23,35 +53,16 @@ set_up_plot <- function(rd) {
   # Add plots for linear data  
   #plot <- plot + geom_line(aes(time, y_value), data=rd$linear$plot_data)
   
-  # Get rid of excess margins for double-plotting
-  plot <- plot + theme(panel.margin = unit(0.01, "npc"))
 
-  # Set Title
-  plot <- plot + ggtitle(rd$title) 
 
-  # Set Up X Axis
-  limits <- c(as.POSIXct(strptime("0001-01-01T00:00:00", "%Y-%m-%dT%H:%M:%S")), as.POSIXct(strptime("0001-01-02T00:00:00", "%Y-%m-%dT%H:%M:%S")))
-  breaks <- pretty_breaks(24)(limits)
-  plot <- plot + scale_x_datetime(breaks=breaks, limits=limits, name="Time of Day", expand=c(0,0), minor_breaks=NULL)
 
-  # Set Up Y Axis
-  limits = c(as.numeric(rd$linear$limits[1]) - 10, as.numeric(rd$linear$limits[2]))
-  # if(length(rd$linear$plot_data$time > 0)) {
-  #   labels = waiver()
-  #   breaks = waiver()
-  # } else {
-  labels = NULL
-  breaks = NULL
-  # }
 
-  plot <- plot + scale_y_continuous(labels=labels, breaks=breaks, name="", limits=limits)
+  # # Set Up Fill Colors
+  # plot <- plot + scale_fill_manual(values=alpha(levels(rd$blocks$color), 0.7))
 
-  # Set Up Fill Colors
-  plot <- plot + scale_fill_manual(values=alpha(levels(rd$blocks$color), 0.7))
-
-  # Set Up Faceting by Day
-  plot <- plot + facet_grid(day_s ~ ., labeller = format_date_label) + theme(strip.text.y = element_text(angle=0)) 
-
+  # # Set Up Faceting by Day
+  # plot <- plot + facet_grid(day_s ~ ., labeller = format_date_label) + theme(strip.text.y = element_text(angle=0)) 
+  plot
 }
 
 
@@ -73,3 +84,6 @@ format_date_label <- function(variable, date) {
   format(as.Date(date), format="%a %m/%d")
 }
 
+base_height_for_blocks <- function(df) {
+  max(df$blocks$height)
+}
