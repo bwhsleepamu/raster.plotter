@@ -41,8 +41,13 @@ raster_data.default <- function(input_data, ...) {
 }
 
 raster_data.list <- function(input_list, ...) {
-  rd <- list(title=input_list$title, save_path=input_list$save_path, file_name=input_list$filename, t_cycle=input_list$t_cycle, timescale=input_list$timescale)
   
+  rd <- list(title=input_list$title, save_path=input_list$save_path, file_name=input_list$filename, t_cycle=input_list$t_cycle, timescale=input_list$timescale, base_block_height=input_list$base_block_height, day_height=input_list$day_height)
+
+  # Defaults
+  if(is.null(rd$day_height)) rd$day_height<-.5
+  if(is.null(rd$raster_width)) rd$raster_width<-12
+
   # Break up by event type
   e <- input_list$events
 
@@ -83,6 +88,7 @@ process_block_event <- function(event_info) {
   df$end_time <- do.call(c, lapply(df$end_time, function(x) { read_iso_time(format(x, "0001-01-01T%H:%M:%S")) }))  
   
   df <- double_plot(df)
+  #df$double_plot_pos <- 0
 
   df$day_s <- do.call(c, lapply(df$day, toString))
   
@@ -117,15 +123,14 @@ parse_timestring <- function(time_s) {
   parsed_time$hour <- as.numeric(substr(time_s, 12, 13))
   parsed_time$min <- as.numeric(substr(time_s, 15, 16))
   parsed_time$sec <- as.numeric(substr(time_s, 18, 19))
-  parsed_time$tz <- "EST"
   
   parsed_time
 }
 
 read_iso_time <- function(x) {
-  time <- parse_timestring(x)
-  tz="EST"
+  #  xts::.parseISO8601(x)$first.time
 
+  time <- parse_timestring(x)
   f <- do.call(firstof, time)
   f
 }
@@ -188,7 +193,7 @@ double_plot <- function(df) {
   # This function changes the date of the right double-plot, causing the actual dates to not match up with the times. 
   # The correct date for a given set of times is (day + double_plot_pos)
   ###
-  
+
   r_df <- df
   l_df <- df
   
