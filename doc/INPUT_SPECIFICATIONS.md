@@ -12,7 +12,7 @@
 ### Explanations:
 - Day Height: 
 	PNG images are made at a resolution of 80dpi. The width of the images is 13 inches for double-plotted and 9 inches for single-plotted rasters. 
-- Base Block Height: See [Positioning and Height](#Positioning and Height)
+- Base Block Height: See [Positioning and Height](#positioning-and-height)
 
 
 
@@ -30,9 +30,9 @@ The "events" object holds an array of event definitions:
 The contents of these individual definitions depend on the type of event. See the desired event type's section for more information.
 
 ### Supported Event Types
-- [Block Events](#Block Events)
-- [Single Timepoint Events](#Single Timepoint Events)
-- [Linear Events](#Linear Events)
+- [Block Events](#block-events)
+- [Single Timepoint Events](#single-timepoint-events)
+- [Linear Events](#linear-events)
 
 ### Block Events
 Each one of these events has a defined **start time** and a defined **end time**. Optionally, each event also contains a specific **color** (in hex coding) and a **text value**. 
@@ -43,9 +43,9 @@ These events are displayed as rectangles on the timeline, stretching from start 
 	{
       "name":"_event-name_",
       "type":"block",
-      "position":_[event-position](#Positioning and Height)_,
-      "height":_[event-height](#Positioning and Height)_,
-      "color":_Hex color definition. Needed if individual events do not have assigned colors. See [Color Definitions](#Color Definitions) for more information_,
+      "position":_[event-position](#positioning-and-height)_,
+      "height":_[event-height](#positioning-and-height)_,
+      "color":_Hex color definition. Needed if individual events do not have assigned colors. See [Color Definitions](#color-definitions) for more information_,
       "blocks":[
       	[
       		"YYYY-MM-DDTHH:MM:SS",
@@ -69,24 +69,24 @@ Each one of these events has a defined **time**. Optionally, each event has an a
 These events are displayed as vertical lines on the timeline at the specified time.
 
 #### Event Definition
-	{
-      "name":"_event-name_",
-      "type":"timepoint",
-      "position":_[event-position](#Positioning and Height)_,
-      "height":_[event-height](#Positioning and Height)_,
-      "color":_Hex color definition. Needed if individual events do not have assigned colors. See [Color Definitions](#Color Definitions) for more information_,
-      "times":[
-      	[
-      		"YYYY-MM-DDTHH:MM:SS",
-          	"#2D2D00BB"
-      	],
-      	[
-      		__event-time__, 
-      		_color(optional)_
-      	],
-      	...
-      ]
-  	}
+{
+  "name":"_event-name_",
+  "type":"timepoint",
+  "position":_[event-position](#positioning-and-height)_,
+  "height":_[event-height](#positioning-and-height)_,
+  "color":_Hex color definition. Needed if individual events do not have assigned colors. See [Color Definitions](#color-definitions) for more information_,
+  "times":[
+  	[
+  		"YYYY-MM-DDTHH:MM:SS",
+      	"#2D2D00BB"
+  	],
+  	[
+  		__event-time__, 
+  		_color(optional)_
+  	],
+  	...
+  ]
+}
 
 ### Linear Events
 *For now, only a single linear event is allowed per raster plot. Double-plotting multiple events might be implemented later*
@@ -111,7 +111,7 @@ The height and position of block and timepoint events is, for now, controlled by
 - position
 - height
 
-The y-axis of each individual day is divided into block sections of the **base_block_height**, which can be set in the [General Options](#General Options) If no **base_block_height** is defined, this height is set to the maximum height of any block or timepoint events. 
+The y-axis of each individual day is divided into block sections of the **base_block_height**, which can be set in the [General Options](#general-options) If no **base_block_height** is defined, this height is set to the maximum height of any block or timepoint events. 
 
 The `0` position corresponds to the section in the [0, base_block_height] range. The position numbering continues to both sides of this section, with position `-1` corresponding to the range [-base_block_height, 0], position `1` to [base_block_height, 2*base_block_height], etc.
 
