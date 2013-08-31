@@ -1,4 +1,85 @@
+## Main Function
 
+raster_data <- function(x, ...) UseMethod("raster_data")
+
+raster_data.default <- function(input_data, ...) {
+}
+
+raster_data.list <- function(input_list, ...) {
+  
+  rd <- list(title=input_list$title, save_path=input_list$save_path, file_name=input_list$filename, t_cycle=input_list$t_cycle, timescale=input_list$timescale, base_block_height=input_list$base_block_height, day_height=input_list$day_height)
+
+  # Defaults
+  if(is.null(rd$day_height)) rd$day_height<-.5
+  if(is.null(rd$raster_width)) rd$raster_width<-12
+  if(is.null(rd$double_plot)) rd$double_plot<-TRUE
+
+  # Break up by event type
+  e <- input_list$events
+
+  # Process single timepoints
+  single_e <- e[vapply(e, function(x) x$type == "single", FALSE)]
+  rd$single_timepoints <- Reduce(function(...) merge(..., all=T), lapply(single_e, process_single_timepoint_event, rd$double_plot))   
+
+  # Process Block Events
+  block_e <- e[vapply(e, function(x) x$type == "block", FALSE)]
+  rd$blocks <- Reduce(function(...) merge(..., all=T), lapply(block_e, process_block_event, rd$double_plot))   
+
+  # Process Linear Events
+  linear_e <- e[vapply(e, function(x) x$type == "linear", FALSE)]
+  if(length(linear_e) > 0) rd$linear <- process_linear_event(linear_e[[1]], rd$double_plot)
+
+  rd$number_of_days <- length(unique(c(rd$single_timepoints$day_s, rd$blocks$day_s, rd$linear$plot_data$day_s)))
+
+  rd
+}
+
+
+## Block Events
+process_block_event <- function(event_info, double_plot_switch) {
+
+  df <- process_start_end_block_event(event_info)
+  
+  # Divide into parts that span two days, and those that don't
+  non_spanning <- df[format(df$start_time, "%Y%m%d") == format(df$end_time, "%Y%m%d"),]
+  spanning <- df[format(df$start_time, "%Y%m%d") != format(df$end_time, "%Y%m%d"),]
+  
+  first_parts <- mdply(spanning, first_div)
+  middle_parts <- mdply(spanning, middle_div)
+  last_parts <- mdply(spanning, last_div)
+
+  df <- rbind(non_spanning, first_parts, middle_parts, last_parts)
+
+  df$day = do.call(c, lapply(df$start_time, function(x) { as.Date(toString(x)) }))
+  df$start_time <- do.call(c, lapply(df$start_time, function(x) { read_iso_time(format(x, "0001-01-01T%H:%M:%S")) }))  
+  df$end_time <- do.call(c, lapply(df$end_time, function(x) { read_iso_time(format(x, "0001-01-01T%H:%M:%S")) }))  
+  
+  df <- double_plot(df, double_plot_switch)
+
+  df$day_s <- do.call(c, lapply(df$day, toString))
+  
+  df
+} 
+
+
+process_start_end_block_event <- function(event_info) {
+  st <- do.call(c, lapply(event_info$blocks, function(x) read_iso_time(x[1]) ))
+  et <- do.call(c, lapply(event_info$blocks, function(x) read_iso_time(x[2]) ))
+
+  if(is.null(event_info$color)) {
+    if(length(event_info$blocks[[1]]) > 2) {
+      colors <- do.call(c, lapply(event_info$blocks, function(x) x[3]))
+    } else {
+      colors <- "#000000"
+    }
+  } else {
+    colors <- event_info$color
+  }
+
+  df <- data.frame(name=event_info$name, start_time=st, end_time=et, color=colors, position=event_info$position, height=event_info$height)
+ 
+  df
+}
 
 first_div <- function(name, start_time, end_time, color, position, height) {
   new_end_time <- read_iso_time(format(start_time, "%Y-%m-%dT23:59:59"))
@@ -31,89 +112,51 @@ last_div <- function(name, start_time, end_time, color, position, height) {
   new_start_time <- read_iso_time(format(end_time, "%Y-%m-%dT00:00:00"))
   data.frame(name=name, start_time=new_start_time, end_time = end_time, color=color, position=position, height=height)
 }
+## Single Timepoint Events
+process_single_timepoint_event <- function(event_info) {
+  t <- do.call(c, lapply(event_info$times, read_iso_time ))    
 
+  df <- data.frame(name=event_info$name, time=t, color=event_info$color, group=event_info$group)
 
-
-
-raster_data <- function(x, ...) UseMethod("raster_data")
-
-raster_data.default <- function(input_data, ...) {
-}
-
-raster_data.list <- function(input_list, ...) {
+  df$day = as.Date(df$time, tz="EST")
   
-  rd <- list(title=input_list$title, save_path=input_list$save_path, file_name=input_list$filename, t_cycle=input_list$t_cycle, timescale=input_list$timescale, base_block_height=input_list$base_block_height, day_height=input_list$day_height)
-
-  # Defaults
-  if(is.null(rd$day_height)) rd$day_height<-.5
-  if(is.null(rd$raster_width)) rd$raster_width<-12
-
-  # Break up by event type
-  e <- input_list$events
-
-  # Process single timepoints
-  single_e <- e[vapply(e, function(x) x$type == "single", FALSE)]
-  rd$single_timepoints <- Reduce(function(...) merge(..., all=T), lapply(single_e, process_single_timepoint_event))   
-
-  # Process Block Events
-  block_e <- e[vapply(e, function(x) x$type == "block", FALSE)]
-  rd$blocks <- Reduce(function(...) merge(..., all=T), lapply(block_e, process_block_event))   
-
-  # Process Linear Events
-  linear_e <- e[vapply(e, function(x) x$type == "linear", FALSE)]
-  if(length(linear_e) > 0) rd$linear <- process_linear_event(linear_e[[1]])
-
-  rd$number_of_days <- length(unique(c(rd$single_timepoints$day_s, rd$blocks$day_s, rd$linear$plot_data$day_s)))
-
-  rd
-}
-
-
-process_block_event <- function(event_info) {
-
-  df <- process_start_end_block_event(event_info)
-  
-  # Divide into parts that span two days, and those that don't
-  non_spanning <- df[format(df$start_time, "%Y%m%d") == format(df$end_time, "%Y%m%d"),]
-  spanning <- df[format(df$start_time, "%Y%m%d") != format(df$end_time, "%Y%m%d"),]
-  
-  first_parts <- mdply(spanning, first_div)
-  middle_parts <- mdply(spanning, middle_div)
-  last_parts <- mdply(spanning, last_div)
-
-  df <- rbind(non_spanning, first_parts, middle_parts, last_parts)
-
-  df$day = do.call(c, lapply(df$start_time, function(x) { as.Date(toString(x)) }))
-  df$start_time <- do.call(c, lapply(df$start_time, function(x) { read_iso_time(format(x, "0001-01-01T%H:%M:%S")) }))  
-  df$end_time <- do.call(c, lapply(df$end_time, function(x) { read_iso_time(format(x, "0001-01-01T%H:%M:%S")) }))  
-  
-  df <- double_plot(df)
-  #df$double_plot_pos <- 0
-
   df$day_s <- do.call(c, lapply(df$day, toString))
-  
-  df
-} 
+  df$time <- do.call(c, lapply(df$time, function(x) { read_iso_time(format(x, "0001-01-01T%H:%M:%S")) }))  
 
-
-process_start_end_block_event <- function(event_info) {
-  st <- do.call(c, lapply(event_info$blocks, function(x) read_iso_time(x[1]) ))
-  et <- do.call(c, lapply(event_info$blocks, function(x) read_iso_time(x[2]) ))
-
-  if(is.null(event_info$color)) {
-    if(length(event_info$blocks[[1]]) > 2) {
-      colors <- do.call(c, lapply(event_info$blocks, function(x) x[3]))
-    } else {
-      colors <- "#000000"
-    }
-  } else {
-    colors <- event_info$color
-  }
-
-  df <- data.frame(name=event_info$name, start_time=st, end_time=et, color=colors, position=event_info$position, height=event_info$height)
- 
   df
 }
+
+## Linear Events
+process_linear_event <- function(event_info, double_plot_switch) {
+
+  linear_event_info <- list(name=event_info$name, limits=event_info$limits, color=(if(is.null(event_info$color)) "#000000" else event_info$color)) #, limits=event_info$limits)
+  linear_event_info$plot_data <- data.frame(do.call(rbind, lapply(event_info$points, process_linear_data)))
+  colnames(linear_event_info$plot_data) <- c("time", "day", "day_s", "y_value")
+
+  if(double_plot_switch) {
+
+  } else
+
+  linear_event_info
+}
+
+process_linear_data <- function(x) {
+  time <- parse_timestring(x[[1]])
+  val <- as.numeric(x[[2]])
+
+  t <- do.call(firstof, list(1, 1, 1, time$hour, time$min, time$sec)
+  y <- time$year
+  m <- time$month
+  d <- time$day
+
+  ds <- sprintf("%s-%s-%s", time$year, time$month, time$day)
+  d <- as.Date.character(ds, format="%Y-%m-%d")
+
+  list(t, d, ds, val)
+}
+
+## Helper Functions
+
 
 parse_timestring <- function(time_s) {
   parsed_time <- list()
@@ -135,41 +178,33 @@ read_iso_time <- function(x) {
   f
 }
 
-process_linear_data <- function(x) {
-  time <- parse_timestring(x[[1]])
-  val <- as.numeric(x[[2]])
-
-  t <- do.call(firstof, list(1, 1, 1, time$hour, time$min, time$sec, time$tz))
-  ds <- sprintf("%s-%s-%s", time$year, time$month, time$day)
-  d <- as.Date.character(ds, format="%Y-%m-%d")
-
-  list(t, ds, d, val)
+# Double-Plotting
+double_plot <- function(df, should_do_it) {
+  ### DANGER ###
+  # This function changes the date of the right double-plot, causing the actual dates to not match up with the times. 
+  # The correct date for a given set of times is (day + double_plot_pos)
+  ###
+  if(should_do_it) { 
+    r_df <- df
+    l_df <- df
+    
+    l_df$double_plot_pos <- 0
+    r_df$double_plot_pos <- 1
+    r_df$day <- r_df$day - 1
+    if(!is.null(r_df$day_s))
+      r_df$day_s <- format(r_df$day, format="%Y-%m-%d")
+    return(rbind(l_df, r_df))
+  } else {
+    df$double_plot_pos <- 0
+    df
+  }
 }
 
-process_single_timepoint_event <- function(event_info) {
-  t <- do.call(c, lapply(event_info$times, read_iso_time ))    
-
-  df <- data.frame(name=event_info$name, time=t, color=event_info$color, group=event_info$group)
-
-  df$day = as.Date(df$time, tz="EST")
-  
-  df$day_s <- do.call(c, lapply(df$day, toString))
-  df$time <- do.call(c, lapply(df$time, function(x) { read_iso_time(format(x, "0001-01-01T%H:%M:%S")) }))  
-
-  df
-}
 
 
-process_linear_event <- function(event_info) {
 
-  linear_event_info <- list(name=event_info$name, limits=event_info$limits, color=(if(is.null(event_info$color)) "#000000" else event_info$color)) #, limits=event_info$limits)
-  linear_event_info$plot_data <- data.frame(do.call(rbind, lapply(event_info$points, process_linear_data)))
-  colnames(linear_event_info$plot_data) <- c("day", "day_s", "time", "y_value")
 
-  linear_event_info
-}
-
-## Labtime Addition
+## Labtime Addition (In Progress)
 
 
 process_start_end_block_event.labtime <- function(event_info) {
@@ -185,23 +220,5 @@ process_block_event.labtime <- function(event_info) {
   df <- process_start_end_block_event.labtime(event_info)
 }
 
-
-
-## Double-Plotting
-double_plot <- function(df) {
-  ### DANGER ###
-  # This function changes the date of the right double-plot, causing the actual dates to not match up with the times. 
-  # The correct date for a given set of times is (day + double_plot_pos)
-  ###
-
-  r_df <- df
-  l_df <- df
-  
-  l_df$double_plot_pos <- 0
-  r_df$double_plot_pos <- 1
-  r_df$day <- r_df$day - 1
-  
-  return(rbind(l_df, r_df))
-}
 
 

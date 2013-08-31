@@ -3,7 +3,8 @@ raster.plotter
 
 Simple R package for creating raster plots based on temporal data using JSON input.
 
-
+# Input File Specifications
+see [Input File Documentation](https://github.com/pmanko/raster.plotter/blob/master/doc/INPUT_SPECIFICATIONS.md)
 
 # Install Instructions:
 
