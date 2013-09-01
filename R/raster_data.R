@@ -128,31 +128,56 @@ process_single_timepoint_event <- function(event_info) {
 
 ## Linear Events
 process_linear_event <- function(event_info, double_plot_switch) {
+  time <- do.call(c, lapply(event_info$points, function(x) x[[1]]))
+  y <- do.call(c, lapply(event_info$points, function(x) if(is.null(x[[2]])) NA else as.numeric(x[[2]]) ))
+  
+  ft <- read_iso_time(time)
+  day <- as.Date(ft, tz="EST")
+  day_s <- do.call(c, lapply(day, toString))
+  t <- read_time_of_day(time)
 
-  linear_event_info <- list(name=event_info$name, limits=event_info$limits, color=(if(is.null(event_info$color)) "#000000" else event_info$color)) #, limits=event_info$limits)
-  linear_event_info$plot_data <- data.frame(do.call(rbind, lapply(event_info$points, process_linear_data)))
-  colnames(linear_event_info$plot_data) <- c("time", "day", "day_s", "y_value")
 
-  if(double_plot_switch) {
 
-  } else
+  linear_event_info$plot_data <- double_plot(data.frame(time=t, y=y, day=day, day_s=day_s, full_time=ft), double_plot_switch)
+
+
+
+  # linear_event_info <- list(name=event_info$name, limits=event_info$limits, color=(if(is.null(event_info$color)) "#000000" else event_info$color)) #, limits=event_info$limits)
+  # linear_event_info$plot_data <- data.frame(do.call(rbind, lapply(event_info$points, process_linear_data)))
+  # colnames(linear_event_info$plot_data) <- c("year", "month", "day", "hour", "min", "sec", "y")
+
+  # linear_event_info$plot_data$time <- do.call(c, lapply(firstof, list(1, 1, 1, linear_event_info$plot_data$hour, linear_event_info$plot_data$min, linear_event_info$plot_data$sec))
+  # #linear_event_info$plot_data$day_s <- do.call(c, )
+  # linear_event_info$plot_data$day <- as.Date.character(linear_event_info$plot_data$day_s, format="%Y-%m-%d")
+
+  # linear_event_info$plot_data$day <- as.Date.character(linear_event_info$plot_data$day_s, format="%Y-%m-%d")
+
+  # linear_event_info$plot_data <- double_plot(linear_event_info$plot_data, double_plot_switch)
 
   linear_event_info
 }
 
+read_time_of_day <- function(x) {
+  hour <- as.numeric(substr(x, 12, 13))
+  min <- as.numeric(substr(x, 15, 16))
+  sec <- as.numeric(substr(x, 18, 19))
+  
+  do.call(firstof, list(1,1,1,hour, min, sec))
+}
+
+
 process_linear_data <- function(x) {
   time <- parse_timestring(x[[1]])
-  val <- as.numeric(x[[2]])
+  val <- if(is.null(x[[2]])) NA else as.numeric(x[[2]])
 
-  t <- do.call(firstof, list(1, 1, 1, time$hour, time$min, time$sec)
-  y <- time$year
-  m <- time$month
-  d <- time$day
+#  t <- do.call(firstof, list(1, 1, 1, time$hour, time$min, time$sec))
+  # y <- time$year
+  # m <- time$month
+  # d <- time$day
 
-  ds <- sprintf("%s-%s-%s", time$year, time$month, time$day)
-  d <- as.Date.character(ds, format="%Y-%m-%d")
+#  ds <- sprintf("%s-%s-%s", time$year, time$month, time$day)
 
-  list(t, d, ds, val)
+  c(time$year, time$month, time$day, time$hour, time$min, time$sec, val)
 }
 
 ## Helper Functions
