@@ -27,19 +27,18 @@ set_up_plot <- function(rd) {
   breaks <- pretty_breaks(8)(limits)
   plot <- plot + scale_x_datetime(breaks=breaks, limits=limits, name="Time of Day", expand=c(0,0), minor_breaks=date_breaks("1 hour"))
 
-  # # Set Up Y Axis
+  # Set Up Y Axis
   if(is.null(rd$points)) {
     labels = NULL
     breaks = NULL
     plot <- plot + scale_y_continuous(labels=labels, breaks=breaks, name="")
-
   } else {
-    # limits = c(as.numeric(rd$linear$limits[1]) - 10, as.numeric(rd$linear$limits[2]))
-    # # if(length(rd$linear$plot_data$time > 0)) {
-    # #   labels = waiver()
-    # #   breaks = waiver()
-    # # } else {
-    # # }
+    limits = c(as.numeric(rd$linear$limits[1]), as.numeric(rd$linear$limits[2]))
+    # if(length(rd$linear$plot_data$time > 0)) {
+    #   labels = waiver()
+    #   breaks = waiver()
+    # } else {
+    # }
   }
 
   # Add Rasters for block events
@@ -49,7 +48,7 @@ set_up_plot <- function(rd) {
   #plot <- plot + geom_segment(aes(x=time, xend=time, y=-20, yend=0), data=rd$single_timepoints)
 
   # Add plots for linear data  
-  #plot <- plot + geom_line(aes(time, y_value), data=rd$linear$plot_data)
+  plot <- plot + geom_line(aes(time, y), data=rd$linear$plot_data)
 
   # Set Up Faceting by Day and Double Plot
   plot <- plot + facet_grid(day_s ~ double_plot_pos, labeller = format_facet_label) + theme(strip.text.y = element_text(angle=0)) 
@@ -69,7 +68,7 @@ plot_raster <- function(json_path) {
   plot <- set_up_plot(rd)
 
   # Save Plot
-  ggsave(plot=plot, filename=rd$file_name, path=rd$save_path, dpi=80, units="in", width=rd$raster_width, height=((rd$number_of_days + rd$day_height)+1)) 
+  ggsave(plot=plot, filename=rd$file_name, path=rd$save_path, dpi=80, units="in", limitsize=FALSE, width=rd$raster_width, height=((rd$number_of_days + rd$day_height)+1)) 
 }
 
 
