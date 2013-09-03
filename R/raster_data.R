@@ -7,7 +7,7 @@ raster_data.default <- function(input_data, ...) {
 
 raster_data.list <- function(input_list, ...) {
   
-  rd <- list(title=input_list$title, save_path=input_list$save_path, file_name=input_list$filename, t_cycle=input_list$t_cycle, timescale=input_list$timescale, base_block_height=input_list$base_block_height, day_height=input_list$day_height)
+  rd <- list(title=input_list$title, save_path=input_list$save_path, file_name=input_list$filename, t_cycle=input_list$t_cycle, timescale=input_list$timescale, base_block_height=input_list$base_block_height, day_height=input_list$day_height, double_plot=input_list$double_plot)
 
   # Defaults
   if(is.null(rd$day_height)) rd$day_height<-.5

@@ -7,14 +7,14 @@
 	  "filename":"__file-name__.png",
 	  "day_height":__height of one day, in inches, at a resolution of 80dpi__,
 	  "base_block_height":__base height for block and timepoint events__,		
+    "double_plot":"FALSE",
 	}
 
 ### Explanations:
 - Day Height: 
 	PNG images are made at a resolution of 80dpi. The width of the images is 13 inches for double-plotted and 9 inches for single-plotted rasters. 
 - Base Block Height: See [Positioning and Height](#positioning-and-height)
-
-
+- Double Plot: `"FALSE"` prevents double-plotting. Default or `"TRUE"` result in double-plotted raster. 
 
 ## Events
 The "events" object holds an array of event definitions:

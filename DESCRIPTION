@@ -2,9 +2,9 @@ Package: dsm.raster.plot
 Type: Package
 Title: Tool for drawing longitudinal data raster plots.
 Description: This plotting tool targets the requirements of the sleep research community for the visualization of longitudinal datasets.
-Version: 0.2.0
+Version: 0.2.1
 Author: Piotr Mankowski <pmankowski@partners.org>
 Maintainer: Piotr Mankowski <pmankowski@partners.org>
 License: MIT
-Depends: RJSONIO, xts, ggplot2, plyr, scales, grid
+Depends: RJSONIO, xts, ggplot2, plyr, scales
 Collate: 'raster_plot.R' 'raster_data.R'

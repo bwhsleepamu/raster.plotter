@@ -7,3 +7,5 @@
 # Sublime Files
 *.sublime-project
 *.sublime-workspace
+
+*~

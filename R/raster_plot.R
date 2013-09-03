@@ -3,7 +3,6 @@ library(xts)
 library(ggplot2)
 library(plyr)
 library(scales)
-library(grid)
 
 set_up_plot <- function(rd) {
   # Initialize Plot
@@ -34,21 +33,17 @@ set_up_plot <- function(rd) {
     plot <- plot + scale_y_continuous(labels=labels, breaks=breaks, name="")
   } else {
     limits = c(as.numeric(rd$linear$limits[1]), as.numeric(rd$linear$limits[2]))
-    # if(length(rd$linear$plot_data$time > 0)) {
-    #   labels = waiver()
-    #   breaks = waiver()
-    # } else {
-    # }
+    plot <- plot + scale_y_continuous(limits=limits)
   }
 
   # Add Rasters for block events
-  plot <- plot + geom_rect(aes(NULL, NULL, xmin=start_time, fill=color, xmax=end_time, ymin=ymin, ymax=ymax), data=rd$blocks)
+  if(!is.null(rd$blocks)) plot <- plot + geom_rect(aes(NULL, NULL, xmin=start_time, fill=color, xmax=end_time, ymin=ymin, ymax=ymax), data=rd$blocks)
 
   # Add single timepoints
-  #plot <- plot + geom_segment(aes(x=time, xend=time, y=-20, yend=0), data=rd$single_timepoints)
+  if(!is.null(rd$single)) plot <- plot + geom_segment(aes(x=time, xend=time, y=-20, yend=0), data=rd$single_timepoints)
 
   # Add plots for linear data  
-  plot <- plot + geom_line(aes(time, y), data=rd$linear$plot_data)
+  if(!is.null(rd$linear)) plot <- plot + geom_line(aes(time, y), data=rd$linear$plot_data)
 
   # Set Up Faceting by Day and Double Plot
   plot <- plot + facet_grid(day_s ~ double_plot_pos, labeller = format_facet_label) + theme(strip.text.y = element_text(angle=0)) 
