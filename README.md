@@ -1,7 +1,6 @@
-raster.plotter
-==============
+# Sleep Raster Plotter
 
-Simple R package for creating raster plots based on temporal data using JSON input.
+Simple R package for creating raster plots based on temporal data.
 
 # Input File Specifications
 see [Input File Documentation](https://github.com/pmanko/raster.plotter/blob/master/doc/INPUT_SPECIFICATIONS.md)
