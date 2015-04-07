@@ -24,7 +24,7 @@ sleep[,label:='SLEEP']
 stages[,value:=as.numeric(stage)]
 
 data_list <- list(episodes=episodes, sleep=sleep, stages=stages) 
-colors <- data.table(label=c('SLEEP', 'WAKE', 'NREM','REM','UNDEF'), color=c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2"))
+colors <- data.table(data_label=c('SLEEP', 'WAKE', 'NREM','REM','UNDEF'), color=c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2"))
 positions <- data.table(name=c('stages','episodes','sleep'),position=c(1,2,3), length=c(10,1.5,1))
 
 raster_plot <- function(data_list, positions, colors) {
@@ -59,6 +59,7 @@ raster_plot <- function(data_list, positions, colors) {
   
   sapply(positions, function(pos_row){
     data <- data_list[[pos_row$name]]
+    data[,i:=.I]
     row_min_y <- last_min_y 
     row_max_y <- row_min_y + pos_row$length
     
@@ -77,8 +78,8 @@ raster_plot <- function(data_list, positions, colors) {
     else {
       # Blocks
       
-      # Set Colors
-      
+      ## Set Colors
+      data[,color:=colors[label==data_label][[1]]$color,by='i']
       
     }
   })
