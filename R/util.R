@@ -13,8 +13,8 @@ split_day_spanning_blocks <- function(dt, t_cycle=T_CYCLE, epoch_length=EPOCH_LE
   
   new_end_day_labtime <- t_cycle-epoch_length
   
-  first_division[,`:=`(end_day_number=start_day_number, end_day_labtime=new_end_day_labtime)]
-  second_division[,`:=`(start_day_number=end_day_number, start_day_labtime=0)]
+  first_division[,`:=`(end_day_number=start_day_number, end_labtime=new_end_day_labtime)]
+  second_division[,`:=`(start_day_number=end_day_number, start_labtime=0)]
   
   rbindlist(list(first_division, second_division))
 }
