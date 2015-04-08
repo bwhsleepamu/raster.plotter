@@ -17,28 +17,39 @@ source("R/data.R")
 ## TEST:
 epoch_length <- EPOCH_LENGTH
 
-episodes <- as.data.table(read.csv('/home/pwm4/Desktop/plottest.csv'))
+episodes <- as.data.table(read.csv('/home/pwm4/Desktop/plot_test.csv'))
 sleep <- as.data.table(read.csv('/home/pwm4/Desktop/sleep.csv'))
 stages <- as.data.table(read.csv('/home/pwm4/Desktop/stages.csv'))
+actigraphy <- as.data.table(read.csv('/home/pwm4/Desktop/3335GX.csv'))
 
-episodes[,label:=episode_type]
+light <- actigraphy[,data.table(subject_code=subject_code,labtime=labtime_decimal,value=log(light_level))]
+activity <- actigraphy[,data.table(subject_code=subject_code,labtime=labtime_decimal,value=log(activity_count))]
+
+light[value==-Inf, value:=0]
+activity[value==-Inf, value:=0]
+
+#episodes[,label:=episode_type]
 sleep[,label:='SLEEP']
 stages[,value:=as.numeric(stage)]
 
-data_list <- list(episodes=episodes, sleep=sleep, stages=stages) 
+data_list <- list(episodes=episodes, sleep=sleep, stages=stages, light=light, activity=activity) 
 colors <- data.table(data_label=c('SLEEP', 'WAKE', 'NREM','REM','UNDEF'), color=c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2"))
 #colors <- data.table(data_label=c('SLEEP', 'WAKE', 'NREM','REM','UNDEF'), color=c("red", "aquamarine", "rosybrown", "wheat", "orange"))
-positions <- data.table(name=c('episodes','stages','sleep'),position=c(1,2,3), length=c(1,5,1))
+positions <- data.table(name=c('activity','light', 'sleep','episodes','stages'), length=c(5,5,1,1,3))
+#positions <- data.table(name=c('activity','sleep', 'light'), length=c(10,1,10))
+#positions <- data.table(name=c('activity'), length=c(10))
 
-raster_plot <- function(data_list, positions, colors, days=NULL) {
+raster_plot <- function(data_list, positions, colors, days=NULL, draw_double=TRUE) {
 
   .e <- environment()
   
   min_labtime <- min(sapply(data_list, function(x){ if(!is.null(x$labtime[1])) {x$labtime[1]} else {x$start_labtime[1]}}))
   min_day <- set_days(min_labtime)[[1]]
   
-  if(!is.null(days))
+  if(!is.null(days)) {
     days <- days + min_day
+  }
+    
   
   # Main Plot
   plot <- ggplot(environment = .e)
@@ -49,7 +60,7 @@ raster_plot <- function(data_list, positions, colors, days=NULL) {
   plot <- plot + xlab("Time (hours)")
   
   # Faceting
-  plot <- plot + facet_grid(day ~ .)
+  plot <- plot + facet_grid(day ~ double_plot_pos)
   
   # Scaling and Margins
   #plot <- plot + theme(panel.margin = unit(0, "npc"))
@@ -70,7 +81,12 @@ raster_plot <- function(data_list, positions, colors, days=NULL) {
   
   fill_colors <- colors$color
   names(fill_colors) <- colors$data_label
+  
   plot <- plot + scale_fill_manual(values = fill_colors)  
+  
+  # Panel margins for double plots
+  #plot <- plot + theme(panel.margin = unit(0.00, "npc"))
+  
   
   for(i in 1:nrow(positions)) {  
     pos_row <- positions[i,]
@@ -87,21 +103,27 @@ raster_plot <- function(data_list, positions, colors, days=NULL) {
       data_min <- r[1]
       data_range <- diff(r)
       data[,value:=row_min_y+(value-data_min)*(as.numeric(pos_row$length)/data_range)]
-      setup_point_data(data)
+      data <- setup_point_data(data)
   
       # Limit by days
       if(!is.null(days))
         data <- data[day %in% days]
       
+      # Double-Plot
+      data <- double_plot(data, draw_double)
+      
       plot <- plot + geom_line(aes(x=labtime, y=value), data=data)
     } 
     else {
       # Blocks
-      setup_block_data(data)
+      data <- setup_block_data(data)
 
       # Limit by days
       if(!is.null(days))
         data <- data[day %in% days]
+      
+      # Double-Plot
+      data <- double_plot(data, draw_double)
       
       ## Set Colors
       plot <- plot + geom_rect(aes(NULL, NULL, xmin = start_labtime, xmax = end_labtime + epoch_length, fill = label), ymin = row_min_y, ymax = row_max_y, data = data)
