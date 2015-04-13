@@ -1,6 +1,9 @@
 # History files
 .Rhistory
 .RData
+playground.R
+data/*
+outputs/*
 
 # Example code in package build process
 *-Ex.R

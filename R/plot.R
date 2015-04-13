@@ -8,36 +8,7 @@ source("R/util.R")
 source("R/data.R")
 
 
-## INPUT
-# Title
-# positions: order and length. for example: name,position,length
-# colors: label, color
-# data_list: list of data tables
-
-## TEST:
 epoch_length <- EPOCH_LENGTH
-
-episodes <- as.data.table(read.csv('/home/pwm4/Desktop/plot_test.csv'))
-sleep <- as.data.table(read.csv('/home/pwm4/Desktop/sleep.csv'))
-stages <- as.data.table(read.csv('/home/pwm4/Desktop/stages.csv'))
-actigraphy <- as.data.table(read.csv('/home/pwm4/Desktop/3335GX.csv'))
-
-light <- actigraphy[,data.table(subject_code=subject_code,labtime=labtime_decimal,value=log(light_level))]
-activity <- actigraphy[,data.table(subject_code=subject_code,labtime=labtime_decimal,value=log(activity_count))]
-
-light[value==-Inf, value:=0]
-activity[value==-Inf, value:=0]
-
-#episodes[,label:=episode_type]
-sleep[,label:='SLEEP']
-stages[,value:=as.numeric(stage)]
-
-data_list <- list(episodes=episodes, sleep=sleep, stages=stages, light=light, activity=activity) 
-colors <- data.table(data_label=c('SLEEP', 'WAKE', 'NREM','REM','UNDEF'), color=c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2"))
-#colors <- data.table(data_label=c('SLEEP', 'WAKE', 'NREM','REM','UNDEF'), color=c("red", "aquamarine", "rosybrown", "wheat", "orange"))
-positions <- data.table(name=c('activity','light', 'sleep','episodes','stages'), length=c(5,5,1,1,3))
-#positions <- data.table(name=c('activity','sleep', 'light'), length=c(10,1,10))
-#positions <- data.table(name=c('activity'), length=c(10))
 
 raster_plot <- function(data_list, positions, colors, days=NULL, draw_double=TRUE) {
 
@@ -91,44 +62,48 @@ raster_plot <- function(data_list, positions, colors, days=NULL, draw_double=TRU
   for(i in 1:nrow(positions)) {  
     pos_row <- positions[i,]
     data <- copy(data_list[[pos_row$name]])
-    data[,i:=.I]
-    row_max_y <- last_max_y 
-    row_min_y <- row_max_y - as.numeric(pos_row$length)
-    
-    if('value'%in%colnames(data)){
-      # Points
+    if(nrow(data) > 0) {
+      print("HAHAHA")
+      data[,i:=.I] 
+      row_max_y <- last_max_y 
+      row_min_y <- row_max_y - as.numeric(pos_row$length)
       
-      ## Re-Scale
-      r <- range(data$value)
-      data_min <- r[1]
-      data_range <- diff(r)
-      data[,value:=row_min_y+(value-data_min)*(as.numeric(pos_row$length)/data_range)]
-      data <- setup_point_data(data)
-  
-      # Limit by days
-      if(!is.null(days))
-        data <- data[day %in% days]
+      if('value'%in%colnames(data)){
+        # Points
+        
+        ## Re-Scale
+        r <- range(data$value)
+        data_min <- r[1]
+        data_range <- diff(r)
+        data[,value:=row_min_y+(value-data_min)*(as.numeric(pos_row$length)/data_range)]
+        data <- setup_point_data(data)
+        
+        # Limit by days
+        if(!is.null(days))
+          data <- data[day %in% days]
+        
+        # Double-Plot
+        data <- double_plot(data, draw_double)
+        
+        plot <- plot + geom_line(aes(x=labtime, y=value), data=data)
+      } 
+      else {
+        # Blocks
+        data <- setup_block_data(data)
+        
+        # Limit by days
+        if(!is.null(days))
+          data <- data[day %in% days]
+        
+        # Double-Plot
+        data <- double_plot(data, draw_double)
+        
+        ## Set Colors
+        plot <- plot + geom_rect(aes(NULL, NULL, xmin = start_labtime, xmax = end_labtime + epoch_length, fill = label), ymin = row_min_y, ymax = row_max_y, data = data)
+      }
       
-      # Double-Plot
-      data <- double_plot(data, draw_double)
-      
-      plot <- plot + geom_line(aes(x=labtime, y=value), data=data)
-    } 
-    else {
-      # Blocks
-      data <- setup_block_data(data)
-
-      # Limit by days
-      if(!is.null(days))
-        data <- data[day %in% days]
-      
-      # Double-Plot
-      data <- double_plot(data, draw_double)
-      
-      ## Set Colors
-      plot <- plot + geom_rect(aes(NULL, NULL, xmin = start_labtime, xmax = end_labtime + epoch_length, fill = label), ymin = row_min_y, ymax = row_max_y, data = data)
     }
-    
+        
     last_max_y <- row_min_y
   }
   plot
