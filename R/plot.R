@@ -3,9 +3,9 @@ library("ggplot2")
 library(scales)
 library(data.table)
 
-source("R/constants.R")
-source("R/util.R")
-source("R/data.R")
+source("../R/constants.R")
+source("../R/util.R")
+source("../R/data.R")
 
 
 epoch_length <- EPOCH_LENGTH
@@ -14,11 +14,11 @@ raster_plot <- function(data_list, positions, colors, days=NULL, draw_double=TRU
 
   .e <- environment()
   
-  min_labtime <- min(sapply(data_list, function(x){ if(!is.null(x$labtime[1])) {x$labtime[1]} else {x$start_labtime[1]}}))
-  min_day <- set_days(min_labtime)[[1]]
-  
+#   min_labtime <- min(sapply(data_list, function(x){ if(!is.null(x$labtime[1])) {x$labtime[1]} else {x$start_labtime[1]}}))
+#   min_day <- set_days(min_labtime)[[1]]
+#   
   if(!is.null(days)) {
-    days <- days + min_day
+    days <- days # + min_day
   }
     
   
@@ -63,7 +63,6 @@ raster_plot <- function(data_list, positions, colors, days=NULL, draw_double=TRU
     pos_row <- positions[i,]
     data <- copy(data_list[[pos_row$name]])
     if(nrow(data) > 0) {
-      print("HAHAHA")
       data[,i:=.I] 
       row_max_y <- last_max_y 
       row_min_y <- row_max_y - as.numeric(pos_row$length)

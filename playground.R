@@ -26,9 +26,7 @@ data_list <- list(episodes=episodes, sleep=sleep, stages=stages, light=light, ac
 
 
 
-colors <- data.table(data_label=c('SLEEP', 'WAKE', 'NREM','REM','UNDEF'), color=c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2"))
 #colors <- data.table(data_label=c('SLEEP', 'WAKE', 'NREM','REM','UNDEF'), color=c("red", "aquamarine", "rosybrown", "wheat", "orange"))
-positions <- data.table(name=c('activity','light', 'sleep','episodes','stages'), length=c(5,5,1,1,3))
 #positions <- data.table(name=c('activity','sleep', 'light'), length=c(10,1,10))
 #positions <- data.table(name=c('activity'), length=c(10))
 
