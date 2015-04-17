@@ -1,4 +1,5 @@
 # server.R
+library(shiny)
 source("../R/plot.R")
 source("webdata.R")
 

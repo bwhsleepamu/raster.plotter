@@ -1,7 +1,6 @@
 # server.R
 library(shiny)
-source("../R/plot.R")
-source("webdata.R")
+#source("../R/plot.R")
 
 shinyServer(function(input, output) {
   # Reactive Functions
