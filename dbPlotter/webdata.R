@@ -1,3 +1,5 @@
+library(ROracle)
+
 loadMainData <- function() {
   episodes <- as.data.table(read.csv('../data/episodes/episodes.csv'))
   sleep <- as.data.table(read.csv('../data/sleep/sleep.csv'))

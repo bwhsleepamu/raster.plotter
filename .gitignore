@@ -13,3 +13,6 @@ outputs/*
 
 *~
 .Rproj.user
+
+#
+db.R
