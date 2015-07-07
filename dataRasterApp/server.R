@@ -4,12 +4,35 @@ library(shiny)
 
 shinyServer(function(input, output) {
   # Reactive Functions
-
+  rv <- reactiveValues()
+  rv$dt_list <- list()
+  
   # Height helper
-  plotHeight <- reactive({
-    if (input$plot == 0)
-      return(400)
-    isolate((diff(input$days)+1)*100)
+#   plotHeight <- reactive({
+#     if (input$plot == 0)
+#       return(400)
+#     isolate((diff(input$days)+1)*100)
+#   })
+#   
+  readFile <- reactive({
+    inFile <- input$data_file
+    print(length(rv$dt_list))
+    
+    if (!is.null(inFile)) {
+      isolate(rv$dt_list <- c(rv$dt_list, as.data.table(read.csv(inFile$datapath))))
+      print(length(rv$dt_list))
+    }
+  })
+  
+  topFile <- reactive({
+    readFile()
+    
+    print(length(rv$dt_list))
+
+    if(length(rv$dt_list) > 0)
+      rv$dt_list[[1]]
+    else
+      NULL
   })
   
   # Dynamic UI
@@ -31,12 +54,8 @@ shinyServer(function(input, output) {
     # column will contain the local filenames where the data can
     # be found.
     
-    inFile <- input$data_file
-    
-    if (is.null(inFile))
-      return(NULL)
-    
-    as.data.table(read.csv(inFile$datapath))
+    topFile()
+
   })
 
 })

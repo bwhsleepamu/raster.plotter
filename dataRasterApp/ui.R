@@ -1,3 +1,5 @@
+library(data.table)
+library(ggplot2)
 library(shiny)
 
 shinyUI(fluidPage(
@@ -19,7 +21,7 @@ shinyUI(fluidPage(
         tags$table(class='table table-striped',
           tags$thead(tags$th("file"), tags$th("labtime column"), tags$th("value column"), tags$th("Y Range"), tags$th("Day Range"), tags$th("Color"), tags$th("Plot?")),
           tags$tbody(
-            tags$th(tags$a("filename.csv")),
+            tags$th(tags$a("filename.csv")), 
             tags$td(
               tags$select(class='form-control', id='labtime_column',
                 tags$option("labtime column")
