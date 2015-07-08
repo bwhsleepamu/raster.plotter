@@ -1,4 +1,5 @@
 library(ROracle)
+library(data.table)
 
 loadMainData <- function() {
   episodes <- as.data.table(read.csv('../data/episodes/episodes.csv'))
