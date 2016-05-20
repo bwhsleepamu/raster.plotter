@@ -1,7 +1,7 @@
-library(shiny)
+  library(shiny)
 
 shinyUI(fluidPage(
-  titlePanel("Raster Plotter"),
+  titlePanel("Protocol Visualizer"),
   
   fluidRow(
     column(width=3,
