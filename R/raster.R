@@ -29,10 +29,10 @@ plot_raster <- function(data, subject_code="Example", number_of_days=NA, first_d
   plot <- plot + facet_grid(day_number ~ double_plot_pos)
   
   # Scaling and Margins
-  y_breaks <- c(-8.5,-8, -7.5, -6, -4.5, -4, -3, -1, 0)
+  y_breaks <- c(-8.5,-8, -7.5, -6, -4.5, -4, -3, -1, 0, 5, 10)
   
   plot <- plot + scale_x_continuous(limits=c(0 - epoch_length, 24 + epoch_length), expand=c(0,0), breaks=c(0,4,8,12,16,20)) 
-  plot <- plot + scale_y_continuous(limits=c(-8.6, 0.01), breaks=y_breaks, labels=lapply(y_breaks,y_axis_formatter))
+  plot <- plot + scale_y_continuous(limits=c(-8.6, 10), breaks=y_breaks, labels=lapply(y_breaks,y_axis_formatter))
   
   plot <- plot + theme(panel.margin.x = unit(0.00, "npc"))
   
@@ -40,10 +40,11 @@ plot_raster <- function(data, subject_code="Example", number_of_days=NA, first_d
   plot <- plot + scale_fill_manual(values=cbbPalette) + scale_colour_manual(values=cbbPalette)
   
   # Plotting
-  plot <- plot + geom_line(data=graph_data[activity_or_bedrest_episode>0],mapping=(aes(group=activity_or_bedrest_episode))) #aes(colour=epoch_type)
+  plot <- plot + geom_line(data=graph_data,mapping=(aes(group=activity_or_bedrest_episode))) #aes(colour=epoch_type)
   plot <- plot + geom_rect(aes(NULL, NULL, xmin=start_day_labtime, xmax=end_day_labtime+epoch_length), ymin=-2, ymax=0, fill=NA, color="black", data=graph_sleep_episodes)
   plot <- plot + geom_rect(aes(NULL, NULL, xmin=start_day_labtime, xmax=end_day_labtime+epoch_length, fill=label, color=label), ymin=-4, ymax=-2, data=graph_state_episodes)
   plot <- plot + geom_text(aes(x = (start_day_labtime+end_day_labtime)/2, label=activity_or_bedrest_episode), y=-1, size=2.5, data=graph_sleep_episodes)
+  plot <- plot + geom_line(data=graph_data, aes(y=y), color='blue', size=1)
   
   
   plot
@@ -104,11 +105,21 @@ y_axis_formatter <- function(x) {
   else if (x == -8.5) { res <- "" }
   else if (x == -1) { res <- "Sleep Episode"}
   else if (x == -3) { res <- "Sleep Stage"}
+  else if (x == 0) { res <- ""}
+  else if (x == 5) { res <- "Continuous"}
+  else if (x == 10) { res <- ""}
   else { res <- as.character(x) }
   
   res
 }
 
+# Continuous Data
+transform_continuous <- function(values, cutoff=1) {
+  max_v <- quantile(values, cutoff)
+  min_v <- min(values)
+  
+  (values - min_v)*(10/(max_v-min_v))
+}
 
 # Double-Plotting
 double_plot <- function(dataset, plot_double=TRUE) {

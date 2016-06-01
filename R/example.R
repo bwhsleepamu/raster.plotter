@@ -21,21 +21,34 @@ sleep_episodes <- fread("example_data/sleep.csv")
 state_episodes <- fread("example_data/episodes.csv")
 
 setkey(sleep_data, subject_code, labtime)
-sleep_data <- sleep_data[activity_or_bedrest_episode > 0]
+#sleep_data <- sleep_data[activity_or_bedrest_episode > 0]
+
+
 
 # Generate row indeces
 sleep_data[, pk:=.I]
 # Map stages to epoch types
 sleep_data[,epoch_type:=as.factor(as.character(lapply(stage, map_epoch_type))),]
+
+# Generate example continuous data
+n <- nrow(sleep_data)
+t <- seq(0,4*pi,,2000)
+a <- 3
+b <- 2
+c.unif <- runif(n)
+c.norm <- rnorm(n)
+amp <- 2
+
+y <- a*sin(b*t)+c.norm*amp*.1 
+sleep_data[,y:=y]
 ##
-
-
-
 
 
 # Sleep Stage Data Setup
 sleep_data.v <- copy(sleep_data)
 convert_stage_for_raster(sleep_data.v)
+sleep_data.v[,y:=transform_continuous(y)]
+
 sleep_data.v[,c('day_number','day_labtime'):=set_days(labtime)]
 sleep_data.v <- double_plot(sleep_data.v,TRUE)
 
